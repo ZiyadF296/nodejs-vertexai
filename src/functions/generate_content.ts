@@ -19,7 +19,6 @@ import {
   GenerateContentRequest,
   GenerateContentResult,
   GenerationConfig,
-  Part,
   RequestOptions,
   SafetySetting,
   StreamGenerateContentResult,
@@ -63,29 +62,6 @@ export async function generateContent(
   request = formatContentRequest(request, generationConfig, safetySettings);
 
   validateGenerateContentRequest(request);
-
-  // Temporarily fix potential server issue by splitting functionCall/text if both exist
-  if (request.contents && Array.isArray(request.contents)) {
-    request.contents = request.contents.map(content => {
-      if (content.parts && Array.isArray(content.parts)) {
-        const newParts: Part[] = [];
-        content.parts.forEach(part => {
-          if (part.functionCall && part.text !== undefined) {
-            if (Object.keys((part as Part).functionCall!).length > 0) {
-              newParts.push({functionCall: (part as Part).functionCall!});
-            }
-            if ((part as Part).text && (part as Part).text!.trim() !== '') {
-              newParts.push({text: (part as Part).text!});
-            }
-          } else {
-            newParts.push(part);
-          }
-        });
-        content.parts = newParts;
-      }
-      return content;
-    });
-  }
 
   if (request.generationConfig) {
     request.generationConfig = validateGenerationConfig(
@@ -142,31 +118,10 @@ export async function generateContentStream(
   request = formatContentRequest(request, generationConfig, safetySettings);
   validateGenerateContentRequest(request);
 
-  // Temporarily fix potential server issue by splitting functionCall/text if both exist
-  if (request.contents && Array.isArray(request.contents)) {
-    request.contents = request.contents.map(content => {
-      if (content.parts && Array.isArray(content.parts)) {
-        const newParts: Part[] = [];
-        content.parts.forEach(part => {
-          if (part.functionCall && part.text !== undefined) {
-            if (Object.keys((part as Part).functionCall!).length > 0) {
-              newParts.push({functionCall: (part as Part).functionCall!});
-            }
-            if ((part as Part).text && (part as Part).text!.trim() !== '') {
-              newParts.push({text: (part as Part).text!});
-            }
-          } else {
-            newParts.push(part);
-          }
-        });
-        content.parts = newParts;
-      }
-      return content;
-    });
-  }
-
   if (request.generationConfig) {
-    request.generationConfig = validateGenerationConfig(request.generationConfig);
+    request.generationConfig = validateGenerationConfig(
+      request.generationConfig
+    );
   }
 
   const generateContentRequest: GenerateContentRequest = {
